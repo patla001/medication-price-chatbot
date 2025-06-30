@@ -1,0 +1,18 @@
+{
+  "name": "medication-price-chatbot",
+  "version": "1.0.0",
+  "description": "A chatbot for searching best medication prices using MCP",
+  "scripts": {
+    "frontend": "cd frontend && pnpm dev",
+    "backend": "cd backend && source .venv/bin/activate && uvicorn main:app --reload --port 8000",
+    "install:all": "cd frontend && pnpm install && cd ../backend && uv sync",
+    "build": "cd frontend && pnpm build",
+    "start": "cd frontend && pnpm start",
+    "backend:install": "cd backend && uv sync",
+    "frontend:install": "cd frontend && pnpm install"
+  },
+  "keywords": ["medication", "chatbot", "MCP", "pharmacy", "pricing"],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@8.0.0"
+} 
