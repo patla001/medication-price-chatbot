@@ -1,30 +1,5 @@
 # Medication Price Comparison Chatbot
 
-## 🔄 Application Flow
-
-```mermaid
-graph TD
-    A["👤 User"] -->|"Types message"| B["💻 Frontend<br/>Next.js"]
-    B -->|"POST /chat"| C["⚙️ Backend<br/>FastAPI"]
-    C -->|"Process query"| D{"🔍 Query Analysis"}
-    D -->|"Medication query"| E["🌐 Tavily<br/>Search API"]
-    D -->|"General query"| F["💬 General<br/>Response"]
-    E -->|"Search web"| G["🏥 Pharmacy<br/>Sources"]
-    G -->|"Extract prices"| H["📊 Process<br/>Results"]
-    H -->|"Format data"| C
-    F -->|"Format response"| C
-    C -->|"JSON response"| B
-    B -->|"Display results"| A
-
-    subgraph "🏪 Supported Pharmacies"
-        G --> P1["GoodRx"]
-        G --> P2["Walgreens"]
-        G --> P3["CVS"]
-        G --> P4["Costco"]
-        G --> P5["Walmart"]
-    end
-```
-
 A modern AI-powered chatbot that helps users find the best prices for medications across different pharmacies using **Tavily's search API** and **Model Context Protocol (MCP)**.
 
 ## 🚀 Features
