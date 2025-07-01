@@ -1,103 +1,202 @@
-import { DollarSign, MapPin, Phone, ExternalLink, Clock } from 'lucide-react'
-
-interface MedicationPrice {
-  pharmacy_name: string
-  price: number
-  location: string
-  distance?: string
-  phone?: string
-  website?: string
-  in_stock: boolean
-  last_updated: string
-}
+import React from 'react';
+import { DollarSign, MapPin, Phone, ExternalLink, Clock, AlertCircle, Truck, Info } from 'lucide-react'
 
 interface PriceCardProps {
-  price: MedicationPrice
+  pharmacy_name: string;
+  type?: string;
+  price?: number;
+  address?: string;
+  phone?: string;
+  website?: string;
+  delivery_info?: string;
+  in_stock?: boolean;
+  last_updated?: string;
+  hours?: string;
+  distance?: number;
+  accuracy?: string;
+  accuracy_type?: string;
 }
 
-export default function PriceCard({ price }: PriceCardProps) {
-  const formatPrice = (amount: number) => {
+const PriceCard: React.FC<PriceCardProps> = ({
+  pharmacy_name,
+  type,
+  price,
+  address,
+  phone,
+  website,
+  delivery_info,
+  in_stock = true,
+  last_updated,
+  hours,
+  distance,
+  accuracy,
+  accuracy_type,
+}) => {
+  const formatPrice = (amount: number | undefined) => {
+    if (amount === undefined || amount === null) return 'Call for price'
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount)
   }
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString()
-    } catch {
-      return 'Recently'
-    }
+  const getMapLink = (addr: string) => {
+    const encodedAddress = encodeURIComponent(addr)
+    return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`
   }
 
-  const handleWebsiteClick = () => {
-    if (price.website) {
-      window.open(price.website, '_blank', 'noopener,noreferrer')
+  const formatPhone = (phoneNum: string) => {
+    // Remove any non-digit characters
+    const cleaned = phoneNum.replace(/\D/g, '')
+    // Format as (XXX) XXX-XXXX
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`
     }
+    return phoneNum
+  }
+
+  const formatDistance = (dist: number | undefined) => {
+    if (!dist) return null
+    if (dist < 1) return `${(dist * 1000).toFixed(0)}m away`
+    return `${dist.toFixed(1)} miles away`
+  }
+
+  const getAccuracyBadge = () => {
+    if (!accuracy_type) return null
+    
+    const badgeColor = accuracy_type === 'tavily_extracted' ? 'bg-green-100 text-green-800' : 
+                      accuracy_type === 'estimated' ? 'bg-yellow-100 text-yellow-800' : 
+                      'bg-gray-100 text-gray-800'
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}>
+        <Info className="w-3 h-3 mr-1" />
+        {accuracy_type === 'tavily_extracted' ? 'Verified' : 
+         accuracy_type === 'estimated' ? 'Estimated' : 'Sample'}
+      </span>
+    )
   }
 
   return (
-    <div className="price-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-all duration-300">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-800 text-lg">{price.pharmacy_name}</h3>
-        <div className={`px-2 py-1 rounded-full text-xs ${
-          price.in_stock 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {price.in_stock ? 'In Stock' : 'Out of Stock'}
+    <div className="bg-white rounded-lg shadow-md p-4 mb-4 border border-gray-200">
+      <div className="flex justify-between items-start mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-gray-900">{pharmacy_name}</h3>
+            {getAccuracyBadge()}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>{type || 'Local Pharmacy'}</span>
+            {distance && (
+              <>
+                <span>•</span>
+                <span>{formatDistance(distance)}</span>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="text-xl font-bold text-green-600">
+          {formatPrice(price)}
         </div>
       </div>
 
-      {/* Price */}
-      <div className="flex items-center mb-3">
-        <DollarSign className="w-5 h-5 text-green-600 mr-1" />
-        <span className="text-2xl font-bold text-green-600">
-          {formatPrice(price.price)}
-        </span>
+      <div className="space-y-3 text-sm text-gray-600">
+        {/* Address - Always show if available, with improved styling */}
+        {address && address.trim() && (
+          <div className="flex items-start gap-2 p-2 bg-gray-50 rounded-md">
+            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-600" />
+            <div className="flex-1">
+              <a
+                href={getMapLink(address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-800 hover:text-blue-600 hover:underline font-medium"
+                title="Open in Google Maps"
+              >
+                {address}
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Show message if no address for local pharmacy */}
+        {!address && type === 'Local Pharmacy' && (
+          <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-md text-yellow-800">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span className="text-sm">Address not available - call for location details</span>
+          </div>
+        )}
+
+        {/* Delivery info for online pharmacies */}
+        {delivery_info && (
+          <div className="flex items-center gap-2">
+            <Truck className="w-4 h-4 text-green-600" />
+            <span className="text-green-700 font-medium">{delivery_info}</span>
+          </div>
+        )}
+
+        {/* Phone number */}
+        {phone && (
+          <div className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-blue-600" />
+            <a
+              href={`tel:${phone.replace(/\D/g, '')}`}
+              className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+              title="Call pharmacy"
+            >
+              {formatPhone(phone)}
+            </a>
+          </div>
+        )}
+
+        {/* Hours */}
+        {hours && (
+          <div className="flex items-start gap-2">
+            <Clock className="w-4 h-4 mt-0.5 text-gray-500" />
+            <div className="text-gray-700">{hours}</div>
+          </div>
+        )}
+
+        {/* Website */}
+        {website && (
+          <div className="flex items-center gap-2">
+            <ExternalLink className="w-4 h-4 text-blue-600" />
+            <a
+              href={website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+            >
+              {type === 'Online Pharmacy' ? 'View Details & Order Online' : 'View Store Details'}
+            </a>
+          </div>
+        )}
+
+        {/* Stock status */}
+        {!in_stock && (
+          <div className="flex items-center gap-2 p-2 bg-amber-50 rounded-md text-amber-800">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>
+              {type === 'Online Pharmacy'
+                ? 'Check website for stock availability'
+                : 'Call store to verify availability'}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Location */}
-      <div className="flex items-center text-gray-600 mb-2">
-        <MapPin className="w-4 h-4 mr-2" />
-        <span className="text-sm">
-          {price.location}
-          {price.distance && ` • ${price.distance}`}
-        </span>
-      </div>
-
-      {/* Phone */}
-      {price.phone && (
-        <div className="flex items-center text-gray-600 mb-2">
-          <Phone className="w-4 h-4 mr-2" />
-          <a 
-            href={`tel:${price.phone}`}
-            className="text-sm hover:text-primary-600 transition-colors"
-          >
-            {price.phone}
-          </a>
+      {/* Last updated */}
+      {last_updated && (
+        <div className="mt-3 pt-2 border-t border-gray-100">
+          <div className="text-xs text-gray-400">
+            Last updated: {new Date(last_updated).toLocaleDateString()}
+          </div>
         </div>
-      )}
-
-      {/* Last Updated */}
-      <div className="flex items-center text-gray-500 mb-3">
-        <Clock className="w-4 h-4 mr-2" />
-        <span className="text-xs">Updated {formatDate(price.last_updated)}</span>
-      </div>
-
-      {/* Website Link */}
-      {price.website && (
-        <button
-          onClick={handleWebsiteClick}
-          className="w-full flex items-center justify-center bg-primary-50 text-primary-700 py-2 px-4 rounded-md hover:bg-primary-100 transition-colors"
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          <span className="text-sm font-medium">Visit Website</span>
-        </button>
       )}
     </div>
   )
-} 
+}
+
+export default PriceCard 

@@ -1,27 +1,83 @@
 # Medication Price Comparison Chatbot
 
-A modern AI-powered chatbot that helps users find the best prices for medications across different pharmacies using **Tavily's search API** and **Model Context Protocol (MCP)**.
+A modern AI-powered chatbot that helps users find the best prices for medications across different pharmacies using **Tavily's search API**, **FastMCP**, and **Model Context Protocol (MCP)**.
 
 ## 🚀 Features
 
-- **AI-Powered Chat Interface**: Natural language queries for medication price searches
-- **Real-Time Price Comparison**: Uses [Tavily API](https://www.tavily.com/) to search current medication prices
-- **Multiple Pharmacy Support**: Compares prices across GoodRx, Walgreens, CVS, Costco, Walmart, and more
-- **Location-Based Search**: Find pharmacies and prices near you
-- **Modern UI/UX**: Built with Next.js 14 and Tailwind CSS
-- **MCP Integration**: Implements Model Context Protocol for standardized AI tool interactions
-- **TypeScript**: Full type safety across frontend and backend
+### Core Functionality
+- **AI-Powered Chat Interface**: Natural language queries with intelligent medication name extraction
+- **Real-Time Price Comparison**: Uses [Tavily API](https://www.tavily.com/) to search current medication prices across 15+ domains
+- **Smart Query Processing**: Handles complex queries like "find ibuprofen in San Diego, CA" with proper medication/location parsing
+- **Multiple Pharmacy Support**: Compares prices across GoodRx, Walgreens, CVS, Costco, Walmart, SingleCare, Cost Plus Drugs, and more
+- **Location-Based Search**: Find pharmacies and prices near you with address validation and distance calculation
+- **Generic Alternatives**: Find cost-effective generic versions of brand-name medications
+- **Medication Information**: Get detailed information about uses, dosage, side effects, and warnings
+
+### Enhanced User Experience
+- **Modern UI/UX**: Built with Next.js 14 and Tailwind CSS with professional design
+- **Interactive Suggestions**: Click-to-use suggestion chips for common queries
+- **Smart Loading States**: Visual feedback with typing indicators and loading animations
+- **Professional Header**: Medication-themed branding with clear navigation
+- **Responsive Design**: Works seamlessly on desktop and mobile devices
+- **Error Handling**: Comprehensive error messages with helpful suggestions
+
+### Advanced Backend Features
+- **FastMCP Integration**: High-performance Model Context Protocol implementation
+- **Smart Caching System**: TTL-based caching with automatic cleanup (2-hour cache for pharmacy data)
+- **Rate Limiting**: Token bucket algorithm for API protection
+- **Enhanced Price Extraction**: 20+ regex patterns for comprehensive price detection
+- **Pharmacy Type Classification**: Automatic categorization (retail, online, discount)
+- **Data Validation**: Address validation, price range filtering, and duplicate detection
+- **Background Processing**: Efficient handling of multiple search queries
 
 ## 🏗️ Architecture
 
 - **Frontend**: Next.js 14 with TypeScript, Tailwind CSS, and Lucide React icons
-- **Backend**: Python FastAPI with Tavily integration and MCP server
+- **Backend**: Python FastAPI with Tavily integration and FastMCP server
 - **AI Search**: Tavily API for real-time web search optimized for LLMs
-- **Protocol**: Model Context Protocol (MCP) for AI-tool standardization
+- **Protocol**: FastMCP for high-performance AI-tool standardization
+- **Caching**: TTL-based caching system for optimized performance
+- **Rate Limiting**: Token bucket algorithm for API protection
+
+## 🔧 Recent Improvements (v2.0)
+
+### 🎯 Query Processing Enhancements
+- **Fixed Medication Name Extraction**: Now correctly extracts "ibuprofen" from "find ibuprofen in San Diego, CA"
+- **Multiple Query Patterns**: Supports "find X in Y", "find X near Y", "find X at Y" formats
+- **Smart Location Parsing**: Properly separates medication names from location data
+- **Context-Aware Processing**: Better understanding of user intent and query structure
+
+### 💰 Price Comparison Overhaul
+- **Enhanced Price Extraction**: 20+ regex patterns for different price formats:
+  - Standard: `$4.99`, `4.99 dollars`
+  - Promotional: `as low as $3.50`, `starting at $2.99`
+  - Pharmacy-specific: `Walmart $4.88`, `CVS $12.99`
+  - Range patterns: `$5.00-$15.00` (takes lower price)
+  - Context-aware: `ibuprofen price $6.99`
+- **Real Data Processing**: No more mock data - all results from live API searches
+- **Price Validation**: Filters for reasonable medication prices ($0.50-$500.00)
+- **Statistical Analysis**: Calculates averages, ranges, and potential savings
+- **Pharmacy Categorization**: Groups results by retail, online, and discount pharmacies
+
+### 🏪 Pharmacy Search Improvements
+- **Address Validation**: Ensures complete street addresses for local pharmacies
+- **Distance Calculation**: Accurate distance measurements using Haversine formula
+- **Multiple Search Strategies**: Different query patterns for comprehensive results
+- **Expanded Domain Coverage**: 15+ pharmacy domains for better results
+- **Duplicate Detection**: Filters out duplicate pharmacy listings
+- **Enhanced Metadata**: Phone numbers, hours, accuracy ratings, and delivery info
+
+### 🎨 User Interface Enhancements
+- **Professional Design**: Clean, medical-themed interface with proper branding
+- **Interactive Elements**: Suggestion chips, loading states, and visual feedback
+- **Smart Suggestions**: Context-aware suggestions that appear at appropriate times
+- **Error Messaging**: Clear error messages with actionable suggestions
+- **Accessibility**: Improved keyboard navigation and screen reader support
+- **Mobile Optimization**: Responsive design that works on all devices
 
 ## 📋 Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 18+ and npm/pnpm
 - Python 3.9+
 - Tavily API key (sign up at [tavily.com](https://www.tavily.com/))
 
@@ -41,7 +97,7 @@ cd medication-price-chatbot
 npm install
 
 # Install frontend dependencies
-cd frontend && npm install && cd ..
+cd frontend && pnpm install && cd ..
 
 # Install backend dependencies
 cd backend && pip install -r requirements.txt && cd ..
@@ -56,13 +112,11 @@ cd backend
 cp env.example .env
 ```
 
-Edit the `.env` file and add your API keys:
+Edit the `.env` file and add your API key:
 
 ```env
 # API Keys
 TAVILY_API_KEY=your_tavily_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here  # Optional, for future AI features
-ANTHROPIC_API_KEY=your_anthropic_api_key_here  # Optional, for future AI features
 
 # Server Configuration
 HOST=localhost
@@ -72,9 +126,13 @@ DEBUG=True
 # CORS
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
-# MCP Configuration
-MCP_SERVER_NAME=medication-price-server
-MCP_SERVER_VERSION=1.0.0
+# Cache Configuration
+CACHE_TTL=7200  # 2 hours for pharmacy data
+CACHE_CLEANUP_INTERVAL=300  # 5 minutes
+
+# Rate Limiting
+RATE_LIMIT_TOKENS=100
+RATE_LIMIT_INTERVAL=60  # 1 minute
 ```
 
 ### 4. Get Your Tavily API Key
@@ -86,11 +144,10 @@ MCP_SERVER_VERSION=1.0.0
 
 ## 🚦 Running the Application
 
-### Development Mode
-
-Run both frontend and backend simultaneously:
+### Quick Start (Recommended)
 
 ```bash
+# Start both frontend and backend
 npm run dev
 ```
 
@@ -102,170 +159,176 @@ This will start:
 
 **Backend only:**
 ```bash
-npm run dev:backend
-# or
-cd backend && python -m uvicorn main:app --reload --port 8000
+cd backend
+source .venv/bin/activate  # or source venv/bin/activate
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 **Frontend only:**
 ```bash
-npm run dev:frontend
-# or
-cd frontend && npm run dev
+cd frontend
+pnpm dev
 ```
 
-## 📱 Usage
+## 📱 Usage Examples
 
-1. Open your browser and go to `http://localhost:3000`
-2. (Optional) Enter your location for better local results
-3. Start chatting! Try queries like:
-   - "What's the price of ibuprofen?"
-   - "Find cheap metformin near me"
-   - "Compare insulin prices"
-   - "Show me acetaminophen costs"
+### 1. **Location-Based Medication Search**:
+```text
+"find ibuprofen in San Diego, CA"
+"find metformin near New York, NY"
+"locate acetaminophen at Los Angeles"
+```
+
+### 2. **Price Comparison**:
+```text
+"compare prices for ibuprofen"
+"show me price differences for metformin 500mg"
+```
+
+### 3. **Generic Alternatives**:
+```text
+"find generic alternatives for Advil"
+"show me cheaper versions of Lipitor"
+```
+
+### 4. **Medication Information**:
+```text
+"get medication info for aspirin"
+"tell me about ibuprofen side effects"
+```
+
+### 5. **Pharmacy Search**:
+```text
+"find pharmacies near me with Tylenol"
+"locate CVS stores in Miami"
+```
 
 ## 🔧 API Endpoints
 
-### Backend API
+### MCP Tool Endpoints
+
+- **POST** `/mcp/tools/find_pharmacies` - Find pharmacies with medication
+- **POST** `/mcp/tools/compare_prices` - Compare medication prices
+- **POST** `/mcp/tools/find_generic_alternatives` - Find generic alternatives
+- **POST** `/mcp/tools/get_medication_info` - Get medication information
+- **POST** `/mcp/tools/search_medication_price` - Search medication prices
+
+### System Endpoints
 
 - **GET** `/` - API status
-- **POST** `/chat` - Main chat endpoint
-- **POST** `/search-medication` - Direct medication search
 - **GET** `/health` - Health check
-- **POST** `/mcp/tools/list` - List available MCP tools
-- **POST** `/mcp/tools/execute` - Execute MCP tools
+- **GET** `/mcp/status` - MCP server status
+- **GET** `/mcp/stats` - Usage statistics
 
 ### Example API Usage
 
 ```bash
-# Chat with the bot
-curl -X POST "http://localhost:8000/chat" \
+# Find pharmacies
+curl -X POST "http://localhost:8000/mcp/tools/find_pharmacies" \
   -H "Content-Type: application/json" \
-  -d '{"message": "Find price for ibuprofen", "user_location": "New York"}'
+  -d '{"medication_name": "ibuprofen", "location": "San Diego, CA", "search_type": "local"}'
 
-# Direct medication search
-curl -X POST "http://localhost:8000/search-medication" \
+# Compare prices
+curl -X POST "http://localhost:8000/mcp/tools/compare_prices" \
   -H "Content-Type: application/json" \
-  -d '{"medication_name": "ibuprofen", "location": "New York"}'
+  -d '{"medication_name": "ibuprofen", "pharmacy_types": ["retail", "online", "discount"]}'
 ```
 
-## 🧠 How It Works
+## 🧠 Advanced Features
 
-The application follows a streamlined process to find and compare medication prices:
+### 1. **Smart Query Processing**
+- Intelligent medication name extraction from complex queries
+- Location parsing with multiple format support
+- Context-aware query understanding
+- Fallback mechanisms for ambiguous queries
 
-```mermaid
-graph TD
-    A[User] -->|Types message| B[Frontend - Next.js]
-    B -->|POST /chat| C[Backend - FastAPI]
-    C -->|Analyze message| D{Is medication query?}
-    D -->|Yes| E[Tavily Search API]
-    D -->|No| F[General Response]
-    E -->|Search web| G[Multiple Pharmacies]
-    G -->|Extract prices| H[Process Results]
-    H -->|Format response| C
-    F -->|Format response| C
-    C -->|JSON response| B
-    B -->|Display results| A
-    
-    subgraph "Pharmacy Sources"
-    G --> P1[GoodRx]
-    G --> P2[Walgreens]
-    G --> P3[CVS]
-    G --> P4[Costco]
-    G --> P5[Walmart]
-    end
-```
+### 2. **Enhanced Price Analysis**
+- Multi-pattern price extraction (20+ regex patterns)
+- Price range validation and filtering
+- Statistical analysis (averages, ranges, savings)
+- Pharmacy type categorization and comparison
 
-1. **User Input**: User sends a message through the chat interface
-2. **Intent Detection**: Backend analyzes the message for medication-related keywords
-3. **Tavily Search**: If medication query detected, searches web using Tavily API
-4. **Price Extraction**: Extracts price information from search results
-5. **Response**: Returns formatted response with price comparisons
-6. **MCP Integration**: Exposes search functionality as standardized MCP tools
+### 3. **Comprehensive Pharmacy Search**
+- Multiple search strategies for maximum coverage
+- Address validation and geocoding
+- Distance calculation and sorting
+- Metadata extraction (phone, hours, delivery info)
 
-## 🛡️ Model Context Protocol (MCP)
+### 4. **Real-Time Data Processing**
+- Live API integration with Tavily search
+- No mock or sample data - all real results
+- Intelligent caching for performance
+- Rate limiting for API protection
 
-This project implements MCP to provide standardized AI-tool interactions:
+## 🛡️ Performance & Reliability
 
-- **Tools**: `search_medication_price` - Search for medication prices
-- **Resources**: Real-time price data from multiple pharmacies
-- **Protocol**: JSON-RPC 2.0 messaging over HTTP
+### Caching Strategy
+- **Pharmacy Data**: 2-hour cache for location-based searches
+- **Price Data**: 30-minute cache for price comparisons
+- **Medication Info**: 1-hour cache for drug information
+- **Automatic Cleanup**: Expired cache removal every 5 minutes
 
-### MCP Tool Usage
+### Rate Limiting
+- **Token Bucket Algorithm**: 100 tokens per minute per endpoint
+- **Graceful Degradation**: Informative error messages when limits exceeded
+- **Usage Tracking**: Analytics for monitoring and optimization
 
-```json
-{
-  "tool_name": "search_medication_price",
-  "parameters": {
-    "medication_name": "ibuprofen",
-    "dosage": "200mg",
-    "location": "New York, NY"
-  }
-}
-```
-
-## 🎨 Customization
-
-### Adding New Pharmacy Sources
-
-Edit `backend/main.py` and update the `search_medication_prices` function:
-
-```python
-# Add new pharmacy domains to include_domains
-include_domains=[
-    "goodrx.com", 
-    "walgreens.com", 
-    "cvs.com", 
-    "your-new-pharmacy.com"  # Add here
-]
-```
-
-### Styling
-
-The frontend uses Tailwind CSS. Customize colors in `frontend/tailwind.config.js`:
-
-```javascript
-theme: {
-  extend: {
-    colors: {
-      primary: {
-        50: '#eff6ff',
-        500: '#3b82f6',  // Change primary color
-        600: '#2563eb',
-        700: '#1d4ed8',
-      }
-    }
-  }
-}
-```
+### Error Handling
+- **Comprehensive Validation**: Input validation at all levels
+- **Graceful Failures**: Meaningful error messages with suggestions
+- **Fallback Mechanisms**: Alternative search strategies when primary fails
+- **Logging**: Detailed logging for debugging and monitoring
 
 ## 🧪 Testing
 
 ```bash
+# Run all tests
+npm run test
+
 # Backend tests
-cd backend && python -m pytest
+cd backend && python -m pytest tests/
 
 # Frontend tests  
-cd frontend && npm test
+cd frontend && pnpm test
+
+# Test specific functionality
+cd backend && python -m pytest tests/test_cache_rate_limit.py
+cd backend && python -m pytest tests/test_errors.py
 ```
 
-## 📦 Production Build
+## 📦 Production Deployment
 
-```bash
-# Build frontend
-npm run build
+1. **Build the Application**:
+   ```bash
+   npm run build
+   ```
 
-# Start production server
-npm start
-```
+2. **Configure Production Environment**:
+   - Set production environment variables
+   - Configure reverse proxy (nginx recommended)
+   - Set up SSL certificates
+   - Configure monitoring and logging
+
+3. **Start Production Server**:
+   ```bash
+   npm start
+   ```
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes with proper testing
+4. Commit your changes (`git commit -m 'Add amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+### Development Guidelines
+- Follow TypeScript best practices
+- Add tests for new functionality
+- Update documentation for API changes
+- Ensure responsive design for UI changes
+- Test with various medication names and locations
 
 ## 📄 License
 
@@ -274,25 +337,42 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [Tavily](https://www.tavily.com/) for providing the AI-optimized search API
-- [Model Context Protocol](https://github.com/modelcontextprotocol) by Anthropic
-- [FastAPI](https://fastapi.tiangolo.com/) for the backend framework
-- [Next.js](https://nextjs.org/) for the frontend framework
+- [FastAPI](https://fastapi.tiangolo.com/) for the robust backend framework
+- [Next.js](https://nextjs.org/) for the powerful React framework
+- [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS framework
+- [Lucide React](https://lucide.dev/) for the beautiful icon library
 
 ## 📞 Support
 
-If you encounter any issues:
+For support and questions:
 
-1. Check the [Issues](../../issues) page
-2. Ensure all environment variables are set correctly
-3. Verify your Tavily API key is valid
-4. Check that both frontend and backend servers are running
+1. Check the [Issues](../../issues) page for known problems
+2. Review the API documentation above
+3. Test with the provided example queries
+4. Ensure your Tavily API key is valid and has sufficient credits
 
-## 🔮 Future Features
+## 🔮 Roadmap
 
-- [ ] Insurance coverage integration
-- [ ] Prescription discount programs
-- [ ] Medication reminder system
+### Immediate (Q1 2025)
+- [ ] Prescription management integration
+- [ ] Insurance coverage optimization
+- [ ] Mobile app development
+- [ ] Advanced analytics dashboard
+
+### Near-term (Q2 2025)
 - [ ] Multi-language support
-- [ ] Mobile app version
-- [ ] Advanced AI models integration (GPT-4, Claude)
-- [ ] User accounts and medication history 
+- [ ] Healthcare provider integration
+- [ ] AI-powered drug interaction checker
+- [ ] Price alert notifications
+
+### Long-term (Q3-Q4 2025)
+- [ ] Telemedicine platform integration
+- [ ] Blockchain prescription verification
+- [ ] Advanced ML price prediction models
+- [ ] Pharmacy inventory real-time tracking
+
+---
+
+**Version**: 2.0.0  
+**Last Updated**: July 2025  
+**Status**: Production Ready ✅ 
